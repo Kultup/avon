@@ -8,8 +8,8 @@ const canvas = document.createElement('canvas'),
 
 document.getElementById('pdf-container').appendChild(canvas);
 
+// Укажите путь к worker для pdf.js
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.worker.min.js';
-
 
 // Function to calculate the scale based on container size
 const calculateScale = (viewportWidth, viewportHeight, isMobile) => {
