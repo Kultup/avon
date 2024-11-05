@@ -11,7 +11,16 @@ document.getElementById('pdf-container').appendChild(canvas);
 // Укажите путь к worker для pdf.js
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.worker.min.js';
 
-// Function to calculate the scale based on container size
+// Загрузите PDF-документ
+pdfjsLib.getDocument('https://raw.githubusercontent.com/Kultup/avon/main/catalogue.pdf').promise.then(pdfDoc_ => {
+    console.log("PDF загружен успешно");
+    pdfDoc = pdfDoc_;
+    renderPage(pageNum);
+}).catch(error => {
+    console.error("Ошибка при загрузке PDF: ", error);
+});
+
+// Функция для вычисления масштаба на основе размеров контейнера
 const calculateScale = (viewportWidth, viewportHeight, isMobile) => {
     const container = document.getElementById('pdf-container');
     const containerWidth = container.clientWidth;
@@ -20,21 +29,20 @@ const calculateScale = (viewportWidth, viewportHeight, isMobile) => {
     const widthScale = containerWidth / viewportWidth;
     const heightScale = containerHeight / viewportHeight;
 
-    // Increase scale on mobile devices for better readability
+    // Увеличьте масштаб на мобильных устройствах для лучшей читаемости
     let scale = Math.min(widthScale, heightScale);
     if (isMobile) {
-        scale *= 1.5;  // Increase scale for mobile devices
+        scale *= 1.5;
     }
     return scale;
 };
 
-// Render the page
+// Функция для отображения страницы
 const renderPage = num => {
     pageIsRendering = true;
 
-    // Get page
     pdfDoc.getPage(num).then(page => {
-        const isMobile = window.innerWidth <= 768;  // Check if the device is mobile
+        const isMobile = window.innerWidth <= 768;
         const viewport = page.getViewport({ scale: 1 });
         const scale = calculateScale(viewport.width, viewport.height, isMobile);
         const scaledViewport = page.getViewport({ scale });
@@ -49,7 +57,6 @@ const renderPage = num => {
 
         const renderTask = page.render(renderCtx);
 
-        // Wait for rendering to finish
         renderTask.promise.then(() => {
             pageIsRendering = false;
 
@@ -58,13 +65,12 @@ const renderPage = num => {
                 pageNumIsPending = null;
             }
 
-            // Update page info
             document.getElementById('page-info').textContent = `Page ${num} of ${pdfDoc.numPages}`;
         });
     });
 };
 
-// Check for pages rendering
+// Очередь для рендеринга страниц
 const queueRenderPage = num => {
     if (pageIsRendering) {
         pageNumIsPending = num;
@@ -73,29 +79,15 @@ const queueRenderPage = num => {
     }
 };
 
-// Show Prev Page
+// Обработчики для кнопок
 document.getElementById('prev-page').addEventListener('click', () => {
-    if (pageNum <= 1) {
-        return;
-    }
+    if (pageNum <= 1) return;
     pageNum--;
     queueRenderPage(pageNum);
 });
 
-// Show Next Page
 document.getElementById('next-page').addEventListener('click', () => {
-    if (pageNum >= pdfDoc.numPages) {
-        return;
-    }
+    if (pageNum >= pdfDoc.numPages) return;
     pageNum++;
     queueRenderPage(pageNum);
-});
-
-// Get Document
-pdfjsLib.getDocument('catalogue.pdf').promise.then(pdfDoc_ => {
-    console.log("PDF loaded successfully");
-    pdfDoc = pdfDoc_;
-    renderPage(pageNum);
-}).catch(error => {
-    console.error("Error loading PDF: ", error);
 });
